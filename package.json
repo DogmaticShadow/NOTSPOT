@@ -1,0 +1,15 @@
+{
+  "name": "notspot",
+  "version": "1.0.0",
+  "description": "Bus tracker for LA Metro routes 2 and 93",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "gtfs-realtime-bindings": "^1.1.1",
+    "node-fetch": "^2.6.7"
+  }
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stay Connected</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <button id="addPersonBtn" class="add-btn">+ Add Person</button>
+            <h1>Stay Connected</h1>
+        </header>
+        
+        <div class="table-container">
+            <table id="peopleTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Number</th>
+                        <th>Birthday</th>
+                        <th>Frequency</th>
+                        <th>Last Contact</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="peopleTableBody">
+                    <!-- People will be added here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for adding new person -->
+    <div id="addPersonModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Person</h2>
+            <form id="addPersonForm">
+                <input type="text" id="personName" placeholder="Name" required>
+                <input type="tel" id="personNumber" placeholder="Phone Number">
+                <input type="date" id="personBirthday" placeholder="Birthday">
+                <div class="frequency-input">
+                    <input type="number" id="personFrequency" placeholder="Contact frequency" min="1" required>
+                    <select id="frequencyUnit">
+                        <option value="minutes">Minutes</option>
+                        <option value="days" selected>Days</option>
+                        <option value="weeks">Weeks</option>
+                        <option value="months">Months</option>
+                    </select>
+                </div>
+                <button type="submit">Add Person</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
