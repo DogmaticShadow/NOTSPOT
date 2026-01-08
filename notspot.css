@@ -41,11 +41,11 @@ body {
 }
 
 .route-2 {
-    background-color: #e74c3c;
+    background-color: #3498db;
 }
 
 .route-93 {
-    background-color: #3498db;
+    background-color: #e74c3c;
 }
 
 #bus-count {
@@ -67,4 +67,50 @@ body {
 
 .bus-marker.route-93 {
     border-color: #3498db;
+}
+
+/* Bus icon styles */
+.bus-container {
+    width: 24px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bus-body {
+    width: 20px;
+    height: 12px;
+    border-radius: 2px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1px 2px;
+}
+
+.bus-front {
+    position: absolute;
+    right: -2px;
+    top: 2px;
+    width: 4px;
+    height: 6px;
+    background: white;
+    border-radius: 0 2px 2px 0;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+.bus-windows {
+    display: flex;
+    gap: 2px;
+    margin-left: 2px;
+}
+
+.window {
+    width: 2px;
+    height: 4px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 1px;
 }

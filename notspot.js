@@ -4,8 +4,8 @@ const SWIFTLY_API_KEY = '62ab360e9a91093591f904a925c58815'; // <-- Replace with 
 
 // Bus route IDs
 const ROUTES = {
-    '2': '2-13188',
-    '93': '93-13188'
+    '2': '2-13196',
+    '93': '93-13196'
 };
 
 // 6th and Alvarado coordinates
@@ -83,41 +83,97 @@ function updateBusMarkers(busData) {
                 if (bus.vehicle && bus.vehicle.position) {
                     const { latitude, longitude } = bus.vehicle.position;
                     const bearing = bus.vehicle.position.bearing || 0;
-
-                    // Create bus icon with direction
-                    const busColor = routeNumber === '2' ? '#e74c3c' : '#3498db';
-                    const busIcon = L.divIcon({
-                        html: `<div style="
-                            width: 20px; 
-                            height: 12px; 
-                            background: ${busColor}; 
-                            border: 2px solid white; 
-                            border-radius: 3px;
-                            transform: rotate(${bearing}deg);
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                            position: relative;
-                        ">
-                            <div style="
-                                position: absolute;
-                                top: -2px;
-                                right: -2px;
-                                width: 4px;
-                                height: 4px;
-                                background: white;
-                                border-radius: 50%;
-                            "></div>
-                        </div>`,
-                        className: 'bus-icon',
-                        iconSize: [20, 12],
-                        iconAnchor: [10, 6]
-                    });
+                    const directionId = bus.vehicle.trip?.directionId;
+                    
+                    // Direction arrows - different logic for each route
+                    let arrow = '';
+                    let directionName = '';
+                    
+                    if (routeNumber === '2') {
+                        // Route 2: 0 = south (UCLA→USC), 1 = north (USC→UCLA)
+                        if (directionId === 0) {
+                            arrow = '↓';
+                            directionName = 'South (UCLA→USC)';
+                        } else if (directionId === 1) {
+                            arrow = '↑';
+                            directionName = 'North (USC→UCLA)';
+                        } else {
+                            arrow = '?';
+                            directionName = 'Unknown';
+                        }
+                    } else {
+                        // Route 93: 0 = north (LATTC→Glendale), 1 = south (Glendale→LATTC)
+                        if (directionId === 0) {
+                            arrow = '↑';
+                            directionName = 'North (LATTC→Glendale)';
+                        } else if (directionId === 1) {
+                            arrow = '↓';
+                            directionName = 'South (Glendale→LATTC)';
+                        } else {
+                            arrow = '?';
+                            directionName = 'Unknown';
+                        }
+                    }
+                    
+                    // Create bus icon with directional arrow
+                    let busIcon;
+                    if (routeNumber === '2') {
+                        // Route 2: Blue bus with arrow
+                        busIcon = L.divIcon({
+                            html: `<div style="
+                                width: 32px; 
+                                height: 32px; 
+                                background: url('bus-icon-blue.svg') center/contain no-repeat;
+                                position: relative;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">
+                                <span style="
+                                    font-size: 18px;
+                                    color: white;
+                                    text-shadow: 2px 2px 4px black;
+                                    font-weight: bold;
+                                ">${arrow}</span>
+                            </div>`,
+                            className: 'bus-icon-with-arrow',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+                    } else {
+                        // Route 93: Red bus with arrow
+                        busIcon = L.divIcon({
+                            html: `<div style="
+                                width: 32px; 
+                                height: 32px; 
+                                background: url('bus-icon.svg') center/contain no-repeat;
+                                position: relative;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">
+                                <span style="
+                                    font-size: 18px;
+                                    color: white;
+                                    text-shadow: 2px 2px 4px black;
+                                    font-weight: bold;
+                                ">${arrow}</span>
+                            </div>`,
+                            className: 'bus-icon-with-arrow',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+                    }
 
                     const marker = L.marker([latitude, longitude], { icon: busIcon }).addTo(map);
 
                     marker.bindPopup(`
                         <strong>Route ${routeNumber}</strong><br>
                         Vehicle: ${bus.vehicle.vehicle?.id || 'Unknown'}<br>
-                        Direction: ${Math.round(bearing)}°
+                        <strong>Direction: ${directionName}</strong><br>
+                        Direction ID: ${directionId !== undefined ? directionId : 'N/A'}<br>
+                        Bearing: ${bearing ? Math.round(bearing) + '°' : 'No bearing'}<br>
+                        Lat: ${latitude.toFixed(4)} Lng: ${longitude.toFixed(4)}
                     `);
 
                     busMarkers[bus.id] = marker;
@@ -129,7 +185,6 @@ function updateBusMarkers(busData) {
 
     document.getElementById('bus-count').textContent = `${totalBuses} buses tracked`;
 }
-
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initMap();

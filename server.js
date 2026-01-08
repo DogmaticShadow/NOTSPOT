@@ -13,6 +13,79 @@ const SWIFTLY_API_KEY = '62ab360e9a91093591f904a925c58815';
 app.use(cors());
 app.use(express.static('.'));
 
+// Debug endpoint to see available route IDs
+app.get('/api/routes', async (req, res) => {
+    try {
+        const url = 'https://api.goswift.ly/real-time/lametro/gtfs-rt-vehicle-positions';
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': SWIFTLY_API_KEY
+            }
+        });
+        
+        if (!response.ok) {
+            return res.status(response.status).json({ error: `API error: ${response.status}` });
+        }
+        
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(buffer);
+        
+        // Get all unique route IDs
+        const routeIds = [...new Set(feed.entity
+            .filter(entity => entity.vehicle?.trip?.routeId)
+            .map(entity => entity.vehicle.trip.routeId)
+            .filter(routeId => routeId.includes('2') || routeId.includes('93'))
+        )].sort();
+        
+        res.json({
+            totalVehicles: feed.entity.length,
+            routeIdsContaining2or93: routeIds,
+            allRouteIds: [...new Set(feed.entity
+                .filter(entity => entity.vehicle?.trip?.routeId)
+                .map(entity => entity.vehicle.trip.routeId)
+            )].sort().slice(0, 20) // First 20 for reference
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to see raw data structure
+app.get('/api/debug', async (req, res) => {
+    try {
+        const url = 'https://api.goswift.ly/real-time/lametro/gtfs-rt-vehicle-positions';
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': SWIFTLY_API_KEY
+            }
+        });
+        
+        if (!response.ok) {
+            return res.status(response.status).json({ error: `API error: ${response.status}` });
+        }
+        
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(buffer);
+        
+        // Get first few entities to see structure
+        const sampleEntities = feed.entity.slice(0, 3).map(entity => ({
+            id: entity.id,
+            rawData: entity
+        }));
+        
+        res.json({
+            totalEntities: feed.entity.length,
+            sampleEntities: sampleEntities
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Test endpoint to check API base
 app.get('/api/test', async (req, res) => {
     try {
@@ -76,29 +149,54 @@ app.get('/api/buses/:routeId', async (req, res) => {
         
         console.log(`Decoded ${feed.entity.length} total vehicles`);
         
-        // Filter for our specific route using the full routeId (e.g., "2-13188")
-        const vehicles = feed.entity
-            .filter(entity => {
-                const route = entity.vehicle?.trip?.routeId;
-                return route === routeId;
-            })
-            .map(entity => ({
-                id: entity.id,
-                vehicle: {
-                    position: {
-                        latitude: entity.vehicle.position?.latitude,
-                        longitude: entity.vehicle.position?.longitude,
-                        bearing: entity.vehicle.position?.bearing
-                    },
-                    trip: {
-                        routeId: entity.vehicle.trip?.routeId
-                    },
-                    vehicle: {
-                        id: entity.vehicle.vehicle?.id
-                    },
-                    timestamp: entity.vehicle.timestamp
+        // Filter for our specific route and log all available data
+        const filteredEntities = feed.entity.filter(entity => {
+            const route = entity.vehicle?.trip?.routeId;
+            return route === routeId;
+        });
+        
+        console.log(`Found ${filteredEntities.length} vehicles for route ${routeId}`);
+        
+        const vehicles = filteredEntities.map((entity, index) => {
+                // Log the full raw entity data for debugging (first 2 only to avoid spam)
+                if (index < 2) {
+                    console.log('=== RAW ENTITY DATA ===');
+                    console.log(JSON.stringify(entity, null, 2));
+                    console.log('=== END RAW DATA ===');
                 }
-            }));
+                
+                return {
+                    id: entity.id,
+                    vehicle: {
+                        position: {
+                            latitude: entity.vehicle.position?.latitude,
+                            longitude: entity.vehicle.position?.longitude,
+                            bearing: entity.vehicle.position?.bearing,
+                            odometer: entity.vehicle.position?.odometer,
+                            speed: entity.vehicle.position?.speed
+                        },
+                        trip: {
+                            routeId: entity.vehicle.trip?.routeId,
+                            tripId: entity.vehicle.trip?.tripId,
+                            directionId: entity.vehicle.trip?.directionId,
+                            startTime: entity.vehicle.trip?.startTime,
+                            startDate: entity.vehicle.trip?.startDate,
+                            scheduleRelationship: entity.vehicle.trip?.scheduleRelationship
+                        },
+                        vehicle: {
+                            id: entity.vehicle.vehicle?.id,
+                            label: entity.vehicle.vehicle?.label,
+                            licensePlate: entity.vehicle.vehicle?.licensePlate
+                        },
+                        currentStopSequence: entity.vehicle.currentStopSequence,
+                        stopId: entity.vehicle.stopId,
+                        currentStatus: entity.vehicle.currentStatus,
+                        timestamp: entity.vehicle.timestamp,
+                        congestionLevel: entity.vehicle.congestionLevel,
+                        occupancyStatus: entity.vehicle.occupancyStatus
+                    }
+                };
+            });
         
         console.log(`Found ${vehicles.length} vehicles for route ${routeId}`);
         
